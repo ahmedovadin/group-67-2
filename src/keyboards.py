@@ -38,3 +38,9 @@ inline_help_buttons = InlineKeyboardMarkup(
 
     ]
 )
+
+keyboard_quiz_replay = InlineKeyboardMarkup(
+    inline_keyboard=[
+        [InlineKeyboardButton(text='Сыграть снова', callback_data='quiz_start')],
+    ]
+)

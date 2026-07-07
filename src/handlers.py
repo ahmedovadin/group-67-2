@@ -8,7 +8,8 @@ from src.questions import QUESTIONS
 from src.keyboards import (
     keyboard_languages,
     inline_help_buttons,
-    inline
+    inline,
+    keyboard_quiz_replay
 )
 
 
@@ -91,7 +92,7 @@ async def handle_answer(message: Message, state: FSMContext):
 
     index += 1
     if index >= len(QUESTIONS):
-        await message.answer(f"Конец! Счет: {score}/{len(QUESTIONS)}")
+        await message.answer(f"Конец! Счет: {score}/{len(QUESTIONS)}", reply_markup=keyboard_quiz_replay)
         await state.clear()
     else:
         await state.update_data(index=index, score=score)
