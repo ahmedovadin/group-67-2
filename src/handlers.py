@@ -11,6 +11,8 @@ from src.keyboards import (
     inline,
     keyboard_quiz_replay
 )
+from db.users import get_user, create_user
+from db.results import get_score
 
 
 router = Router()
@@ -21,8 +23,13 @@ class Quiz(StatesGroup):
 
 @router.message(CommandStart())
 async def cmd_start(message: Message):
+    user = create_user(
+        telegram_id=message.from_user.id,
+        username=message.from_user.username or "Аноним"
+    )
+
     await message.answer(
-        f'Привет {message.from_user.first_name}! Я твой первый бот.\n'
+        f'Привет {message.from_user.first_name}! Я твой первый бот. \n{user}'
         'Выберите язык программирования',
         reply_markup=keyboard_languages
     )
@@ -41,6 +48,23 @@ async def cmd_help(message: Message):
 @router.message(Command('game'))
 async def cmd_game(message: Message):
     await message.answer("Выберите один пункт", reply_markup=inline)
+
+
+@router.callback_query(F.data == "my_score")
+async def my_score(callback: CallbackQuery):
+    user = get_user(
+        telegram_id=callback.from_user.id
+    )
+
+    if not user:
+        await callback.answer('User Not Found', show_alert=True)
+        return
+
+    data = get_score(
+        user_id=user["id"]
+    )
+    await callback.answer('')
+    await callback.message.answer(f'Твой счет: {data["correct"] or 0}/{data["total"] or 0}', show_alert=True)
 
 @router.message(F.text == "Python")
 async def python_info(message: Message):
