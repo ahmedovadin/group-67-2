@@ -1,9 +1,14 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.filters import CommandStart, Command
+from aiogram.filters import CommandStart, Command, CommandObject
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 
+from db.questions import (
+    get_all_questions,
+    add_question,
+    delete_question
+)
 from src.questions import QUESTIONS
 from src.keyboards import (
     keyboard_languages,
@@ -40,8 +45,12 @@ async def cmd_start(message: Message):
 @router.message(Command('help'))
 async def cmd_help(message: Message):
     await message.answer(
-        '/start - приветствие\n'
-        '/help - список команд',
+         "/start - приветствие\n"
+        "/help - список команд\n"
+        "/game - начать викторину\n"
+        "/list - список вопросов\n"
+        "/add <текст> <ответ> - добавить вопрос\n"
+        "/del <ID> - удалить вопрос",
         reply_markup=inline_help_buttons
     )
 
@@ -65,6 +74,69 @@ async def my_score(callback: CallbackQuery):
     )
     await callback.answer('')
     await callback.message.answer(f'Твой счет: {data["correct"] or 0}/{data["total"] or 0}', show_alert=True)
+
+@router.message(Command('list'))
+async def cmd_help(message: Message):
+    questions = get_all_questions()
+    if not questions:
+        await message.answer("Вопросов пока нет")
+        return
+
+    lines = ["Список вопросов:"]
+    for question in questions:
+        lines.append(
+            f"{question['id']}. {question['question_text']}"
+        )
+
+    await message.answer("\n".join(lines))
+
+@router.message(Command('add'))
+async def cmd_help(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer(
+            "Некорректный формат вопроса\n"
+            "Пример: /add Столица Франции? Париж"
+        )
+        return
+
+    parts = command.args.rsplit(maxsplit=1)
+
+    if len(parts) != 2:
+        await message.answer(
+            "Некорректный формат вопроса, укажите и вопрос, и ответ\n"
+            "Пример: /add Столица Франции? Париж"
+        )
+        return
+
+    question, answer = parts
+    question_text = question.strip()
+    correct_answer = answer.strip().lower()
+    new_id = add_question(question_text, correct_answer)
+    if new_id is None:
+        await message.answer(f"Такой вопрос уже есть")
+    else:
+        await message.answer(f'Вопрос добавлен id {new_id}')
+
+@router.message(Command('del'))
+async def cmd_help(message: Message, command: CommandObject):
+    if not command.args:
+        await message.answer(
+            "Некорректный формат удаления вопроса по id\n"
+            "Пример: /del <ID>"
+        )
+        return
+
+    try:
+        question_id = int(command.args.strip())
+    except ValueError:
+        await message.answer('id должен быть числом')
+        return
+
+    deleted = delete_question(question_id)
+    if deleted:
+        await message.answer(f"Вопрос {question_id} удалён")
+    else:
+        await message.answer(f"Вопрос {question_id} не найден")
 
 @router.message(F.text == "Python")
 async def python_info(message: Message):

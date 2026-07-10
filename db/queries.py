@@ -9,7 +9,7 @@ CREATE_USERS_TABLE = """
 CREATE_QUESTIONS_TABLE = """
     CREATE TABLE IF NOT EXISTS questions (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        question_text TEXT NOT NULL,
+        question_text TEXT NOT NULL UNIQUE,
         correct_answer TEXT NOT NULL
     )
 """
@@ -37,3 +37,7 @@ INSERT_RESULT = """
 GET_SCORE_BY_USER_ID = """
     SELECT COUNT(*) AS total, SUM(is_correct) AS correct FROM results WHERE user_id = ?
 """
+
+INSERT_QUESTION = 'INSERT INTO questions (question_text, correct_answer) VALUES (?, ?)'
+GET_ALL_QUESTIONS = "SELECT * FROM questions ORDER BY id"
+DELETE_QUESTION_BY_ID = "DELETE FROM questions WHERE id = ?"
