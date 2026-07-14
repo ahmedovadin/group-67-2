@@ -38,6 +38,19 @@ GET_SCORE_BY_USER_ID = """
     SELECT COUNT(*) AS total, SUM(is_correct) AS correct FROM results WHERE user_id = ?
 """
 
+TOP_3_USERS = """
+SELECT 
+    users.username AS username,
+    COUNT(results.id) AS correct_count
+FROM users
+LEFT JOIN results 
+    ON users.id = results.user_id 
+    AND results.is_correct = 1
+GROUP BY users.id, users.username
+ORDER BY correct_count DESC
+LIMIT 3
+"""
+
 # --QUESTIONS--
 
 INSERT_QUESTION = 'INSERT INTO questions (question_text, correct_answer) VALUES (?, ?)'

@@ -16,7 +16,7 @@ from src.keyboards import (
     inline,
     keyboard_quiz_replay
 )
-from db.users import get_user, create_user
+from db.users import get_user, create_user, get_top_users
 from db.results import get_score, save_result
 
 
@@ -50,7 +50,8 @@ async def cmd_help(message: Message):
         "/game - начать викторину\n"
         "/list - список вопросов\n"
         "/add <текст> <ответ> - добавить вопрос\n"
-        "/del <ID> - удалить вопрос",
+        "/del <ID> - удалить вопрос\n"
+         "/rating - топ-3 игроков\n",
         reply_markup=inline_help_buttons
     )
 
@@ -118,7 +119,7 @@ async def cmd_help(message: Message, command: CommandObject):
         await message.answer(f'Вопрос добавлен id {new_id}')
 
 @router.message(Command('del'))
-async def cmd_help(message: Message, command: CommandObject):
+async def cmd_del(message: Message, command: CommandObject):
     if not command.args:
         await message.answer(
             "Некорректный формат удаления вопроса по id\n"
@@ -220,6 +221,20 @@ async def start_learning(callback: CallbackQuery):
 @router.message(F.text == "Корзина")
 async def get_group(message: Message):
     await message.answer("привет, примерно вот твоя корзина !!!!")
+
+@router.message(Command('rating'))
+async def cmd_rating(message: Message):
+    top_users = get_top_users()
+
+    if not top_users:
+        await message.answer("Пока никто не играл в викторину")
+        return
+
+    lines = ["Топ игроки:"]
+    for i, user in enumerate(top_users, 1):
+        lines.append(f"{i}. {user['username']}, счет: {user['correct_count']}")
+
+    await message.answer("\n".join(lines))
 
 
 @router.message()

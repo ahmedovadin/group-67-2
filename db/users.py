@@ -3,7 +3,8 @@ from db.queries import (
     GET_USER_BY_TG_ID,
     INSERT_USER,
     UPDATE_USER_USERNAME,
-    DELETE_USER
+    DELETE_USER,
+    TOP_3_USERS
 )
 
 
@@ -25,3 +26,10 @@ def create_user(telegram_id: int, username: str):
     conn.commit()
     conn.close()
     return get_user(telegram_id)
+
+def get_top_users():
+    conn = get_db()
+    users = conn.execute(TOP_3_USERS).fetchall()
+    conn.close()
+
+    return [dict(u) for u in users]
