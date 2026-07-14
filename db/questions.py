@@ -1,7 +1,7 @@
 import sqlite3
 
 from db.database import get_db
-from db.queries import INSERT_QUESTION, GET_ALL_QUESTIONS, DELETE_QUESTION_BY_ID
+from db.queries import INSERT_QUESTION, GET_ALL_QUESTIONS, GET_QUESTION_BY_ID, DELETE_QUESTION_BY_ID
 
 
 def add_question(question_text: str, correct_answer: str):
@@ -21,11 +21,15 @@ def get_all_questions():
     conn = get_db()
     cursor = conn.cursor()
     rows = cursor.execute(GET_ALL_QUESTIONS).fetchall()
-    conn.commit()
     conn.close()
 
-    questions = [dict(row) for row in rows]
-    return questions
+    return [dict(row) for row in rows]
+
+def get_question(question_id: int):
+    conn = get_db()
+    row = conn.execute(GET_QUESTION_BY_ID, (question_id, )).fetchone()
+    conn.close()
+    return dict(row) if row else None
 
 def delete_question(question_id: int):
     conn = get_db()

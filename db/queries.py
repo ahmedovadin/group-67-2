@@ -38,6 +38,9 @@ GET_SCORE_BY_USER_ID = """
     SELECT COUNT(*) AS total, SUM(is_correct) AS correct FROM results WHERE user_id = ?
 """
 
+# --QUESTIONS--
+
 INSERT_QUESTION = 'INSERT INTO questions (question_text, correct_answer) VALUES (?, ?)'
 GET_ALL_QUESTIONS = "SELECT * FROM questions ORDER BY id"
+GET_QUESTION_BY_ID = 'SELECT * FROM questions WHERE id = ?'
 DELETE_QUESTION_BY_ID = "DELETE FROM questions WHERE id = ?"

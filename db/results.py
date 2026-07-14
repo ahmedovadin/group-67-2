@@ -3,7 +3,7 @@ from db.queries import INSERT_RESULT, GET_SCORE_BY_USER_ID
 
 def save_result(user_id: int, question_id: int, is_correct: bool):
     conn = get_db()
-    conn.execute(INSERT_RESULT, (user_id, question_id, is_correct))
+    conn.execute(INSERT_RESULT, (user_id, question_id, int(is_correct)))
     conn.commit()
     conn.close()
 

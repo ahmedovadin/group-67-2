@@ -17,7 +17,7 @@ from src.keyboards import (
     keyboard_quiz_replay
 )
 from db.users import get_user, create_user
-from db.results import get_score
+from db.results import get_score, save_result
 
 
 router = Router()
@@ -170,29 +170,48 @@ async def csharp_info(message: Message):
 async def quiz_start(callback: CallbackQuery, state: FSMContext):
     await callback.answer('Вы готовы?', show_alert=True)
     await state.update_data(index=0, score=0)
+    questions = get_all_questions()  # Тянем из БД
+    if not questions:
+        await callback.message.answer('Вопросы нет в базе(')
+        return
+
+    await state.update_data(questions=questions, index=0, score=0)
     await state.set_state(Quiz.waiting_answer)  # переходим в состояние waiting_answer
-    await callback.message.answer(f"Вопрос 1: {QUESTIONS[0]['q']}")
+    await callback.message.answer(f"Вопрос 1: {questions[0]["question_text"]}")
+
+ # Принимаем ответ - хендлер сработает ТОЛЬКО в состоянии witing_anwser
 
 @router.message(Quiz.waiting_answer)
 async def handle_answer(message: Message, state: FSMContext):
     data = await state.get_data()
     index = data["index"]
+    questions = data["questions"]
     score = data["score"]
 
-    user_answer = message.text.strip().lower()
-    if user_answer == QUESTIONS[index]['a']:
+    user = get_user(message.from_user.id)
+    q = questions[index]
+
+    is_correct = message.text.lower() == q["correct_answer"]
+    save_result(
+        user_id=user["id"],
+        question_id=q["id"],
+        is_correct=is_correct
+    )
+
+
+    if is_correct:
         score += 1
         await message.answer("Правильно! +1")
     else:
-        await message.answer(f"Неверно! Правильный ответ: {QUESTIONS[index]['a']}")
+        await message.answer(f"Неверно! Правильынй ответ: {q["correct_answer"]}")
 
     index += 1
-    if index >= len(QUESTIONS):
-        await message.answer(f"Конец! Счет: {score}/{len(QUESTIONS)}", reply_markup=keyboard_quiz_replay)
+    if index >= len(questions):
+        await message.answer(f"Конец! Счет: {score}/{len(questions)}", reply_markup=keyboard_quiz_replay)
         await state.clear()
     else:
         await state.update_data(index=index, score=score)
-        await message.answer(f"Вопрос {index + 1}: {QUESTIONS[index]['q']}")
+        await message.answer(f"Вопрос {index + 1}: {questions[index]["question_text"]}")
 
 @router.callback_query(F.data == "start_learning")
 async def start_learning(callback: CallbackQuery):
